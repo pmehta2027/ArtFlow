@@ -1,13 +1,17 @@
 # ArtFlow
 
-A minimal Pinterest-style social gallery for artists. Browse a masonry feed of artwork and upload new pieces — no accounts required in this prototype.
+A Pinterest-style social gallery for artists. Browse a masonry feed of artwork and upload new pieces. No accounts required in this prototype.
 
 ## Features
 
-- Masonry explore feed with tag filtering
+- Masonry explore feed
 - Upload artwork with title, artist name, description, and tags
-- Artwork detail pages
-- Local SQLite storage and on-disk image uploads
+- Search for artwork using tags or title in the search bar
+- Artwork detail pages with the ability to like, comment and save artwork
+- Follow and directly message other users
+- Images save locally during development, or automatically use Cloudinary when its credentials are configured
+- Prisma and SQLite store users, artwork, boards, likes, comments, follows, profile images, and conversations
+- Clerk provides secure sign-up, sign-in, and sign-out
 
 ## Tech Stack
 
