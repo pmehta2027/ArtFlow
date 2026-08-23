@@ -1,0 +1,117 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Artwork {
+  id          String   @id @default(cuid())
+  title       String
+  artistName  String
+  description String?
+  imageUrl    String
+  tags        String
+  width       Int?
+  height      Int?
+  createdAt   DateTime @default(now())
+  authorId    String?
+  author      User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  boardItems  BoardArtwork[]
+  likes       Like[]
+  comments    Comment[]
+}
+
+model User {
+  id          String   @id @default(cuid())
+  handle      String   @unique
+  displayName String
+  clerkId     String?  @unique
+  avatarUrl   String?
+  createdAt   DateTime @default(now())
+  artworks    Artwork[]
+  boards      Board[]
+  likes       Like[]
+  comments    Comment[]
+  followers   Follow[] @relation("FollowedUser")
+  following   Follow[] @relation("FollowingUser")
+  conversationsOne Conversation[] @relation("ConversationParticipantOne")
+  conversationsTwo Conversation[] @relation("ConversationParticipantTwo")
+  messages    Message[]
+}
+
+model Follow {
+  followerId  String
+  followingId String
+  createdAt   DateTime @default(now())
+  follower    User     @relation("FollowingUser", fields: [followerId], references: [id], onDelete: Cascade)
+  following   User     @relation("FollowedUser", fields: [followingId], references: [id], onDelete: Cascade)
+
+  @@id([followerId, followingId])
+}
+
+model Conversation {
+  id               String    @id @default(cuid())
+  participantOneId String
+  participantTwoId String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  participantOne   User      @relation("ConversationParticipantOne", fields: [participantOneId], references: [id], onDelete: Cascade)
+  participantTwo   User      @relation("ConversationParticipantTwo", fields: [participantTwoId], references: [id], onDelete: Cascade)
+  messages         Message[]
+
+  @@unique([participantOneId, participantTwoId])
+}
+
+model Message {
+  id             String       @id @default(cuid())
+  body           String
+  createdAt      DateTime     @default(now())
+  conversationId String
+  authorId       String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  author         User         @relation(fields: [authorId], references: [id], onDelete: Cascade)
+}
+
+model Board {
+  id        String         @id @default(cuid())
+  name      String
+  createdAt DateTime       @default(now())
+  ownerId   String
+  owner     User           @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  artworks  BoardArtwork[]
+
+  @@unique([ownerId, name])
+}
+
+model BoardArtwork {
+  boardId   String
+  artworkId String
+  createdAt DateTime @default(now())
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  artwork   Artwork  @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+
+  @@id([boardId, artworkId])
+}
+
+model Like {
+  userId    String
+  artworkId String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artwork   Artwork  @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+
+  @@id([userId, artworkId])
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  body      String
+  createdAt DateTime @default(now())
+  userId    String
+  artworkId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  artwork   Artwork  @relation(fields: [artworkId], references: [id], onDelete: Cascade)
+}

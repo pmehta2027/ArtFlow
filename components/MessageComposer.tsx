@@ -1,0 +1,10 @@
+"use client";
+
+import { FormEvent, useState } from "react";
+
+type Message = { id: string; body: string; authorId: string; createdAt: string | Date; author: { displayName: string } };
+export default function MessageComposer({ conversationId, initialMessages, currentUserId }: { conversationId: string; initialMessages: Message[]; currentUserId: string }) {
+  const [messages, setMessages] = useState(initialMessages); const [body, setBody] = useState(""); const [error, setError] = useState<string | null>(null);
+  async function send(event: FormEvent) { event.preventDefault(); const response = await fetch(`/api/conversations/${conversationId}/messages`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ body }) }); const data = await response.json() as Message & { error?: string }; if (!response.ok) { setError(data.error ?? "Unable to send message."); return; } setMessages([...messages, data]); setBody(""); setError(null); }
+  return <div className="mt-6"><div className="space-y-3">{messages.length ? messages.map(message => <div key={message.id} className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${message.authorId === currentUserId ? "ml-auto bg-stone-900 text-white" : "bg-stone-100 text-stone-800"}`}><p>{message.body}</p><p className={`mt-1 text-xs ${message.authorId === currentUserId ? "text-stone-300" : "text-stone-500"}`}>{message.author.displayName}</p></div>) : <p className="py-10 text-center text-sm text-stone-500">Start the conversation.</p>}</div><form onSubmit={send} className="mt-5 flex gap-2 border-t border-stone-200 pt-5"><input value={body} onChange={event => setBody(event.target.value)} required maxLength={1000} placeholder="Write a message" className="min-w-0 flex-1 rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm text-black placeholder:text-stone-400" /><button className="rounded-xl bg-stone-900 px-4 text-sm font-semibold text-white">Send</button></form>{error && <p className="mt-2 text-sm text-rose-700">{error}</p>}</div>;
+}
