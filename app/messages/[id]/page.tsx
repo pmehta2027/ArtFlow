@@ -13,12 +13,16 @@ export default async function ConversationPage({ params }: { params: Promise<{ i
   const conversation = await prisma.conversation.findFirst({
     where: { id, OR: [{ participantOneId: user.id }, { participantTwoId: user.id }] },
     include: {
-      participantOne: { select: { id: true, handle: true, displayName: true } },
-      participantTwo: { select: { id: true, handle: true, displayName: true } },
+      participantOne: { select: { id: true, handle: true, displayName: true, isPrivate: true } },
+      participantTwo: { select: { id: true, handle: true, displayName: true, isPrivate: true } },
       messages: { include: { author: { select: { displayName: true } } }, orderBy: { createdAt: "asc" } },
     },
   });
   if (!conversation) notFound();
   const otherUser = conversation.participantOneId === user.id ? conversation.participantTwo : conversation.participantOne;
+  if (otherUser.isPrivate) {
+    const followsOtherUser = await prisma.follow.findUnique({ where: { followerId_followingId: { followerId: user.id, followingId: otherUser.id } } });
+    if (!followsOtherUser) notFound();
+  }
   return <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6"><Link href="/messages" className="text-sm font-medium text-stone-600 hover:text-stone-900">← Messages</Link><section className="mt-6 rounded-2xl bg-white p-5 shadow-sm ring-1 ring-stone-200"><Link href={`/profiles/${otherUser.handle}`} className="text-xl font-semibold tracking-tight hover:underline">{otherUser.displayName}</Link><p className="mt-1 text-sm text-stone-500">@{otherUser.handle}</p><MessageComposer conversationId={conversation.id} initialMessages={conversation.messages} currentUserId={user.id} /></section></main>;
 }

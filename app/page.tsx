@@ -2,13 +2,24 @@ import Link from "next/link";
 import MasonryGrid from "@/components/MasonryGrid";
 import { prisma } from "@/lib/prisma";
 import { parseTags } from "@/lib/types";
+import { getCurrentUser } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage({ searchParams }: { searchParams: Promise<{ q?: string; tag?: string }> }) {
   const { q, tag } = await searchParams;
   const searchQuery = (q ?? tag)?.trim().toLowerCase() ?? "";
+  const currentUser = await getCurrentUser();
+  const followedProfiles = currentUser ? await prisma.follow.findMany({ where: { followerId: currentUser.id }, select: { followingId: true } }) : [];
+  const visibleAuthorIds = currentUser ? [currentUser.id, ...followedProfiles.map(follow => follow.followingId)] : [];
   const artworks = await prisma.artwork.findMany({
+    where: {
+      OR: [
+        { author: null },
+        { author: { is: { isPrivate: false } } },
+        ...(visibleAuthorIds.length ? [{ authorId: { in: visibleAuthorIds } }] : []),
+      ],
+    },
     orderBy: { createdAt: "desc" },
     include: { author: { select: { handle: true, displayName: true } } },
   });

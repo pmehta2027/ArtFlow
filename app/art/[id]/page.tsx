@@ -19,7 +19,7 @@ export default async function ArtDetailPage({ params }: ArtDetailPageProps) {
     where: { id },
     include: {
       comments: { include: { user: { select: { displayName: true } } }, orderBy: { createdAt: "asc" } },
-      author: { select: { handle: true, displayName: true } },
+      author: { select: { id: true, handle: true, displayName: true, isPrivate: true } },
       _count: { select: { likes: true } },
       likes: user ? { where: { userId: user.id }, select: { userId: true } } : false,
     },
@@ -27,6 +27,11 @@ export default async function ArtDetailPage({ params }: ArtDetailPageProps) {
 
   if (!artwork) {
     notFound();
+  }
+
+  if (artwork.author?.isPrivate && artwork.author.id !== user?.id) {
+    const followsAuthor = user ? await prisma.follow.findUnique({ where: { followerId_followingId: { followerId: user.id, followingId: artwork.author.id } } }) : null;
+    if (!followsAuthor) notFound();
   }
 
   const tags = parseTags(artwork.tags);

@@ -30,6 +30,7 @@ model User {
   displayName String
   clerkId     String?  @unique
   avatarUrl   String?
+  isPrivate   Boolean  @default(false)
   createdAt   DateTime @default(now())
   artworks    Artwork[]
   boards      Board[]
@@ -37,6 +38,8 @@ model User {
   comments    Comment[]
   followers   Follow[] @relation("FollowedUser")
   following   Follow[] @relation("FollowingUser")
+  sentFollowRequests     FollowRequest[] @relation("FollowRequestSender")
+  receivedFollowRequests FollowRequest[] @relation("FollowRequestRecipient")
   conversationsOne Conversation[] @relation("ConversationParticipantOne")
   conversationsTwo Conversation[] @relation("ConversationParticipantTwo")
   messages    Message[]
@@ -50,6 +53,16 @@ model Follow {
   following   User     @relation("FollowedUser", fields: [followingId], references: [id], onDelete: Cascade)
 
   @@id([followerId, followingId])
+}
+
+model FollowRequest {
+  requesterId String
+  recipientId String
+  createdAt   DateTime @default(now())
+  requester   User     @relation("FollowRequestSender", fields: [requesterId], references: [id], onDelete: Cascade)
+  recipient   User     @relation("FollowRequestRecipient", fields: [recipientId], references: [id], onDelete: Cascade)
+
+  @@id([requesterId, recipientId])
 }
 
 model Conversation {
